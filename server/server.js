@@ -1,0 +1,132 @@
+import "dotenv/config";
+import express from "express";
+import cors from "cors";
+import fetch from "node-fetch";
+import path from "path";
+import { fileURLToPath } from "url";
+import { loadAllPdfs, findSnippets } from "./pdf-indexer.js";
+
+let ChatOpenAI = null;
+try {
+  const mod = await import("@langchain/openai");
+  ChatOpenAI = mod.ChatOpenAI;
+} catch {}
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+
+const app = express();
+app.use(cors());
+app.use(express.json({ limit: "2mb" }));
+
+const PORT = process.env.PORT || 3000;
+const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const KAKAO_JS_KEY = process.env.KAKAO_JS_KEY;
+
+const PDF_DIR = path.join(__dirname, "data");
+let pdfStore = [];
+(async () => {
+  pdfStore = await loadAllPdfs(PDF_DIR);
+  console.log("📄 PDF indexed:", pdfStore.map(d => d.fname));
+})();
+
+// Static: serve public and client from project root
+app.use("/", express.static(path.join(__dirname, "..", "public")));
+app.use("/client", express.static(path.join(__dirname, "..", "client")));
+
+// Client config for keys
+app.get("/config", (req, res) => {
+  res.json({
+    kakaoJsKey: KAKAO_JS_KEY,
+    firebase: {
+      apiKey: process.env.FIREBASE_API_KEY,
+      authDomain: process.env.FIREBASE_AUTH_DOMAIN,
+      projectId: process.env.FIREBASE_PROJECT_ID,
+      storageBucket: process.env.FIREBASE_STORAGE_BUCKET,
+      messagingSenderId: process.env.FIREBASE_MESSAGING_SENDER_ID,
+      appId: process.env.FIREBASE_APP_ID,
+      measurementId: process.env.FIREBASE_MEASUREMENT_ID
+    }
+  });
+});
+
+function checkRules({ problem, proposal, reason }) {
+  const miss = [];
+  if (!problem || problem.trim().length < 10) miss.push("문제상황(10자+)");
+  if (!proposal || proposal.trim().length < 10) miss.push("제안하는 내용(10자+)");
+  if (!reason || reason.trim().length < 10) miss.push("제안하는 이유(10자+)");
+  return miss;
+}
+
+app.post("/api/ai/feedback", async (req, res) => {
+  try {
+    const { problem, proposal, reason } = req.body ?? {};
+    const missing = checkRules({ problem, proposal, reason });
+
+    const query = `${problem} ${proposal} ${reason} 불법주정차 주차 단속 CCTV 공고 안내 민원`;
+    const snippets = findSnippets(pdfStore, query, 3);
+
+    const system = `너는 초등 4학년 과제 피드백 교사야.
+다음 학생 제안이 '문제상황/제안하는 내용/제안하는 이유' 조건을 충족했는지 체크하고,
+PDF 스니펫을 참고해 내용적 보완점을 제시해줘. 불필요한 어려운 용어는 피하고, 4~6문장으로 짧게.`;
+
+    const user = `학생 입력:
+[문제상황] ${problem}
+[제안내용] ${proposal}
+[이유] ${reason}
+
+참고 스니펫:
+${snippets.map((s, i) => `(${i + 1}) ${s.text}\n<${s.fname}>`).join("\n\n")}
+
+부족한 조건: ${missing.length ? missing.join(", ") : "없음"} 
+충족/미충족 여부 + 간단한 개선 팁을 포함.`;
+
+    let aiText = "";
+
+    if (OPENAI_API_KEY) {
+      if (ChatOpenAI) {
+        const llm = new ChatOpenAI({
+          apiKey: OPENAI_API_KEY,
+          model: "gpt-4o-mini",
+          temperature: 0.4
+        });
+        const messages = [
+          { role: "system", content: system },
+          { role: "user", content: user }
+        ];
+        const result = await llm.invoke(messages);
+        aiText = result?.content ?? "";
+      } else {
+        const resp = await fetch("https://api.openai.com/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${OPENAI_API_KEY}`,
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            model: "gpt-4o-mini",
+            temperature: 0.4,
+            messages: [
+              { role: "system", content: system },
+              { role: "user", content: user }
+            ]
+          })
+        });
+        const data = await resp.json();
+        aiText = data?.choices?.[0]?.message?.content ?? "";
+      }
+    } else {
+      aiText = "❌ 서버에 OPENAI_API_KEY가 설정되지 않았어요. .env 파일을 확인하세요.";
+    }
+
+    res.json({ ok: true, missing, snippets, feedback: aiText });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ ok: false, error: "AI feedback failed." });
+  }
+});
+
+app.listen(PORT, () =>
+  console.log(`✅ Server running at http://localhost:${PORT}`)
+);
+
