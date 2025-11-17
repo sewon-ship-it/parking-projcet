@@ -15,6 +15,14 @@ async function loadKakaoAndInit() {
   try {
     const cfg = await getConfig();
     const key = cfg.kakaoJsKey;
+    if (!key || key.trim() === "") {
+      console.warn("⚠️ Kakao API 키가 없습니다. 지도 기능을 사용하려면 server/.env 파일에 KAKAO_JS_KEY를 추가하세요.");
+      const container = document.getElementById("map");
+      if (container) {
+        container.innerHTML = "<div style='padding:20px; text-align:center; color:#666;'>⚠️ Kakao API 키가 필요합니다.<br>server/.env 파일에 KAKAO_JS_KEY를 추가하세요.</div>";
+      }
+      return;
+    }
     await loadKakaoSDK(key);
     if (!window.kakao || !window.kakao.maps) return;
     window.kakao.maps.load(async () => {
@@ -65,5 +73,10 @@ async function loadKakaoAndInit() {
   }
 }
 
-loadKakaoAndInit();
+// DOMContentLoaded 시에만 실행 (중복 방지)
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", loadKakaoAndInit);
+} else {
+  loadKakaoAndInit();
+}
 

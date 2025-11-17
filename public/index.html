@@ -22,17 +22,34 @@
           <h3>동작구 불법주정차 CCTV 위치</h3>
           <div id="map" class="map"></div>
           <small>※ 지도: CCTV 마커</small>
+          <div style="margin-top:10px;">
+            <label><input type="checkbox" id="enableSuggest"> 설치 위치 찍기 모드</label>
+            <div class="muted">지도를 클릭하면 '제안 설치 위치'가 표시돼요.</div>
+            <div>선택 위치: <span id="pickedPos">-</span></div>
+          </div>
         </div>
         <div class="card">
           <h3>불법주정차 단속현황</h3>
           <canvas id="barYear"></canvas>
           <canvas id="barMonth" style="margin-top:12px;"></canvas>
+          <small class="muted">출처: 동작구 불법주정차 단속현황(교육용 가공 데이터)</small>
           <div class="quiz">
             <h4>📝 내용 확인 문제</h4>
-            <ol>
-              <li>단속 건수가 가장 많았던 <b>연도</b>는 언제인가요?</li>
-              <li>단속 건수가 가장 많았던 <b>월</b>은 언제인가요?</li>
-            </ol>
+            <div class="q">
+              <div>1) 단속 건수가 가장 많았던 <b>연도</b>는 언제인가요?</div>
+              <label><input type="radio" name="q1" value="2016"> 2016년</label>
+              <label><input type="radio" name="q1" value="2019"> 2019년</label>
+              <label><input type="radio" name="q1" value="2023"> 2023년</label>
+              <div id="q1Result" class="muted"></div>
+            </div>
+            <div class="q" style="margin-top:8px;">
+              <div>2) 단속 건수가 가장 많았던 <b>월</b>은 언제인가요?</div>
+              <label><input type="radio" name="q2" value="1"> 1월</label>
+              <label><input type="radio" name="q2" value="3"> 3월</label>
+              <label><input type="radio" name="q2" value="8"> 8월</label>
+              <div id="q2Result" class="muted"></div>
+            </div>
+            <button id="btnCheckQuiz">정답 확인</button>
           </div>
         </div>
       </div>
@@ -46,6 +63,8 @@
           <li>신고가 많은 곳에는 어떤 특징이 있을까? (학교/시장/역 주변 등)</li>
         </ul>
         <textarea id="cause" placeholder="예: 주택가 골목에 주차장이 부족해요. 출퇴근 시간에 불법 주정차가 많아져요."></textarea>
+        <button id="btnCauseSubmit">제출 → AI 피드백 받기</button>
+        <div id="causeFeedback" class="result"></div>
       </div>
     </section>
     <section class="panel">
@@ -65,8 +84,8 @@
         <div class="card">
           <h3>AI 피드백</h3>
           <pre id="aiFeedback">작성 후 [조건 확인]을 눌러보세요.</pre>
-          <h4>참고 스니펫</h4>
-          <ul id="snippetList"></ul>
+          <h4>참고 문헌 (PDF)</h4>
+          <ul id="referenceList"></ul>
         </div>
       </div>
     </section>
@@ -82,6 +101,14 @@
         <div class="card">
           <h3>후보 목록 (실시간)</h3>
           <ul id="proposalList"></ul>
+        </div>
+        <div class="card">
+          <h3>분야별 1등 (실시간)</h3>
+          <ul>
+            <li>창의성 1등: <b id="winCreativity">-</b></li>
+            <li>실현가능성 1등: <b id="winFeasible">-</b></li>
+            <li>효과성 1등: <b id="winImpact">-</b></li>
+          </ul>
         </div>
       </div>
     </section>
@@ -125,6 +152,12 @@
           </select>
           <button id="btnSimulate">시뮬레이션 실행</button>
           <small>가상의 모델로 교육용입니다. 실제와 다를 수 있어요.</small>
+          <label style="margin-top:10px;">예측 설명(왜 줄어들까요?)</label>
+          <textarea id="predictExplain" placeholder="예: 등·하교 시간에 안내와 CCTV가 함께 있으면 규칙을 잘 지키게 되고, 혼잡이 줄어요."></textarea>
+          <button id="btnSubmitPrediction">예측 제출 & AI 피드백</button>
+          <div id="simFeedback" class="result"></div>
+          <button id="btnSimulateFromProposal">나의 제안으로 예측</button>
+          <div id="simSummary" class="result"></div>
         </div>
         <div class="card">
           <h3>정책 적용 전/후 비교 (월별)</h3>
@@ -134,14 +167,14 @@
     </section>
   </main>
   <footer>© 2025 Traffic-Class-App • 교육용 데모</footer>
-  <script type="module" src="/client/utils.js"></script>
-  <script type="module" src="/client/rubric.js"></script>
-  <script type="module" src="/client/firebase.js"></script>
-  <script type="module" src="/client/charts.js"></script>
-  <script type="module" src="/client/map.js"></script>
-  <script type="module" src="/client/ai.js"></script>
-  <script type="module" src="/client/poster.js"></script>
-  <script type="module" src="/client/app.js"></script>
+  <script type="module" src="/src/utils.js"></script>
+  <script type="module" src="/src/rubric.js"></script>
+  <script type="module" src="/src/firebase.js"></script>
+  <script type="module" src="/src/charts.js"></script>
+  <script type="module" src="/src/map.js"></script>
+  <script type="module" src="/src/ai.js"></script>
+  <script type="module" src="/src/poster.js"></script>
+  <script type="module" src="/src/app.js"></script>
 </body>
 </html>
 

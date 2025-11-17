@@ -1,4 +1,4 @@
-// client/firebase.js
+// src/firebase.js
 import { getConfig } from "./utils.js";
 
 let app, db;

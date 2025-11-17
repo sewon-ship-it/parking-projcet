@@ -65,5 +65,10 @@ async function loadKakaoAndInit() {
   }
 }
 
-loadKakaoAndInit();
+// DOMContentLoaded 시에만 실행 (중복 방지)
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", loadKakaoAndInit);
+} else {
+  loadKakaoAndInit();
+}
 

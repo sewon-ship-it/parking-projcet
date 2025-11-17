@@ -1,14 +1,15 @@
-// client/firebase.js
+// src/firebase.js
 import { getConfig } from "./utils.js";
 
 let app, db;
 
 export async function initFirebase() {
   const cfg = await getConfig();
-  if (!cfg.firebase || !cfg.firebase.projectId) {
-    console.error("[❌ Firebase 오류] firebaseConfig 에 projectId 가 없습니다.");
-    console.error("firebaseConfig =", cfg.firebase);
-    throw new Error("Firebase 설정이 올바르지 않습니다. (.env 또는 config.json 확인)");
+  if (!cfg.firebase || !cfg.firebase.projectId || cfg.firebase.projectId.trim() === "") {
+    console.warn("⚠️ Firebase 설정이 없습니다. 투표 기능을 사용하려면 .env 파일에 Firebase 설정을 추가하세요.");
+    console.warn("firebaseConfig =", cfg.firebase);
+    // Firebase가 없어도 앱이 동작하도록 더미 객체 반환
+    return null;
   }
 
   const { initializeApp } = await import("https://www.gstatic.com/firebasejs/10.13.1/firebase-app.js");
@@ -31,8 +32,14 @@ export async function initFirebase() {
 }
 
 export async function bindProposalList(ulEl, myTitleInput, submitMsgEl) {
-  const { db, collection, addDoc, onSnapshot, updateDoc, doc, increment, serverTimestamp, query, orderBy } =
-    await initFirebase();
+  const firebase = await initFirebase();
+  if (!firebase) {
+    // Firebase가 없을 때 UI에 메시지 표시
+    if (ulEl) ulEl.innerHTML = "<li style='color: #666;'>⚠️ Firebase 설정이 필요합니다. server/.env 파일에 Firebase 설정을 추가하세요.</li>";
+    if (submitMsgEl) submitMsgEl.textContent = "Firebase 설정이 없어 투표 기능을 사용할 수 없습니다.";
+    return { db: null };
+  }
+  const { db, collection, addDoc, onSnapshot, updateDoc, doc, increment, serverTimestamp, query, orderBy } = firebase;
 
   const col = collection(db, "proposals");
   const q = query(col, orderBy("votes", "desc"));
@@ -97,13 +104,16 @@ export async function bindProposalList(ulEl, myTitleInput, submitMsgEl) {
 }
 
 export async function getTopProposal() {
-  const { db, collection, query, orderBy } = await initFirebase();
+  const firebase = await initFirebase();
+  if (!firebase) return { title: "Firebase 설정 필요" };
+  
+  const { db, collection, query, orderBy } = firebase;
   const { getDocs, limit } = await import("https://www.gstatic.com/firebasejs/10.13.1/firebase-firestore.js");
 
   const q = query(collection(db, "proposals"), orderBy("votes", "desc"), limit(1));
   const snap = await getDocs(q);
   let top = null;
   snap.forEach((d) => (top = { id: d.id, ...d.data() }));
-  return top;
+  return top || { title: "제안 없음" };
 }
 

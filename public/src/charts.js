@@ -1,5 +1,9 @@
 import { loadCSV } from "./utils.js";
 
+// Chart 인스턴스 저장 (중복 생성 방지)
+let yearChart = null;
+let monthChart = null;
+
 export async function renderCharts() {
   const rows = await loadCSV("/data/illegal_parking.csv");
   const byYear = {};
@@ -15,25 +19,33 @@ export async function renderCharts() {
   }
 
   const ctxY = document.getElementById("barYear");
-  new Chart(ctxY, {
-    type: "bar",
-    data: {
-      labels: Object.keys(byYear),
-      datasets: [{ label: "연도별 단속 건수", data: Object.values(byYear) }]
-    },
-    options: { responsive: true }
-  });
+  if (ctxY) {
+    // 기존 차트 파괴
+    if (yearChart) yearChart.destroy();
+    yearChart = new Chart(ctxY, {
+      type: "bar",
+      data: {
+        labels: Object.keys(byYear),
+        datasets: [{ label: "연도별 단속 건수", data: Object.values(byYear) }]
+      },
+      options: { responsive: true }
+    });
+  }
 
   const months = Object.keys(byMonth).map(Number).sort((a,b)=>a-b).map(String);
   const ctxM = document.getElementById("barMonth");
-  new Chart(ctxM, {
-    type: "bar",
-    data: {
-      labels: months,
-      datasets: [{ label: "월별 단속 건수(전체)", data: months.map(m=>byMonth[m]) }]
-    },
-    options: { responsive: true }
-  });
+  if (ctxM) {
+    // 기존 차트 파괴
+    if (monthChart) monthChart.destroy();
+    monthChart = new Chart(ctxM, {
+      type: "bar",
+      data: {
+        labels: months,
+        datasets: [{ label: "월별 단속 건수(전체)", data: months.map(m=>byMonth[m]) }]
+      },
+      options: { responsive: true }
+    });
+  }
 
   const simBtn = document.getElementById("btnSimulate");
   const sel = document.getElementById("policySelect");
@@ -90,5 +102,10 @@ export async function initCharts() {
   await renderCharts();
 }
 
-initCharts();
+// DOMContentLoaded 시에만 실행 (중복 방지)
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", initCharts);
+} else {
+  initCharts();
+}
 
