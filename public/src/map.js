@@ -13,18 +13,30 @@ async function loadKakaoSDK(apiKey) {
 
 async function loadKakaoAndInit() {
   try {
+    console.log("🗺️ 지도 초기화 시작...");
     const cfg = await getConfig();
+    console.log("📋 Config 받음:", cfg);
     const key = cfg.kakaoJsKey;
     if (!key || key.trim() === "") {
-      console.warn("⚠️ Kakao API 키가 없습니다. 지도 기능을 사용하려면 server/.env 파일에 KAKAO_JS_KEY를 추가하세요.");
+      console.error("❌ Kakao API 키가 없습니다!");
+      console.error("Netlify 환경 변수에 KAKAO_JS_KEY를 설정해주세요.");
       const container = document.getElementById("map");
       if (container) {
-        container.innerHTML = "<div style='padding:20px; text-align:center; color:#666;'>⚠️ Kakao API 키가 필요합니다.<br>server/.env 파일에 KAKAO_JS_KEY를 추가하세요.</div>";
+        container.innerHTML = "<div style='padding:20px; text-align:center; color:#d32f2f; background:#ffebee; border-radius:8px;'>⚠️ Kakao API 키가 필요합니다.<br><br>Netlify 대시보드 → Site settings → Environment variables에서<br><b>KAKAO_JS_KEY</b>를 추가해주세요.</div>";
       }
       return;
     }
+    console.log("✅ Kakao API 키 확인됨, SDK 로드 중...");
     await loadKakaoSDK(key);
-    if (!window.kakao || !window.kakao.maps) return;
+    if (!window.kakao || !window.kakao.maps) {
+      console.error("❌ Kakao SDK 로드 실패");
+      const container = document.getElementById("map");
+      if (container) {
+        container.innerHTML = "<div style='padding:20px; text-align:center; color:#d32f2f;'>❌ Kakao 지도 SDK를 로드할 수 없습니다.</div>";
+      }
+      return;
+    }
+    console.log("✅ Kakao SDK 로드 완료, 지도 생성 중...");
     window.kakao.maps.load(async () => {
       const container = document.getElementById("map");
       if (!container) return;
@@ -41,7 +53,9 @@ async function loadKakaoAndInit() {
         sw.open(map, schoolMarker);
         map.setCenter(schoolPos);
       } catch {}
+      console.log("✅ 지도 생성 완료, CCTV 데이터 로드 중...");
       const cctvRows = await loadCSV("./data/cctv.csv");
+      console.log(`📍 CCTV 마커 ${cctvRows.length}개 추가 중...`);
       cctvRows.forEach((r) => {
         const lat = Number(r.lat || r.위도);
         const lng = Number(r.lng || r.경도);
@@ -54,6 +68,7 @@ async function loadKakaoAndInit() {
         kakao.maps.event.addListener(marker, "mouseover", () => infowindow.open(map, marker));
         kakao.maps.event.addListener(marker, "mouseout", () => infowindow.close());
       });
+      console.log("✅ 모든 CCTV 마커 추가 완료!");
       // 설치 위치 찍기 모드
       const chk = document.getElementById("enableSuggest");
       const picked = document.getElementById("pickedPos");
