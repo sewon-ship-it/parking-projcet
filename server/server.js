@@ -31,7 +31,7 @@ app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 
 const SERVER_PORT = process.env.PORT || 8080;
-const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
+const OPENAㅇI_API_KEY = process.env.OPENAI_API_KEY;
 const KAKAO_JS_KEY = process.env.KAKAO_JS_KEY;
 
 const PDF_DIR = path.join(__dirname, "data");
