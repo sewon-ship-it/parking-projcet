@@ -46,11 +46,11 @@ export default defineConfig({
   server: {
     proxy: {
       "/config": {
-        target: "http://localhost:3000",
+        target: `http://localhost:${process.env.PORT || 8080}`,
         changeOrigin: true
       },
       "/api": {
-        target: "http://localhost:3000",
+        target: `http://localhost:${process.env.PORT || 8080}`,
         changeOrigin: true
       }
     }

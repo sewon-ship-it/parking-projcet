@@ -1,0 +1,9 @@
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+# Secrets scanning 설정
+# lock 파일은 제외 (자동 생성 파일)
+[build.environment]
+  SECRETS_SCAN_OMIT_PATHS = "**/package-lock.json,**/node_modules/**"
+
