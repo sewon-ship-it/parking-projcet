@@ -30,7 +30,7 @@ const app = express();
 app.use(cors());
 app.use(express.json({ limit: "2mb" }));
 
-const PORT = process.env.PORT || 3000;
+const SERVER_PORT = process.env.PORT || 3000;
 const OPENAI_API_KEY = process.env.OPENAI_API_KEY;
 const KAKAO_JS_KEY = process.env.KAKAO_JS_KEY;
 
@@ -176,7 +176,6 @@ ${snippets.map((s, i) => `(${i + 1}) ${s.text}\n<${s.fname}>`).join("\n\n")}
   }
 });
 
-app.listen(PORT, () =>
-  console.log(`✅ Server running at http://localhost:${PORT}`)
+app.listen(SERVER_PORT, () =>
+  console.log(`✅ Server running on port ${SERVER_PORT}`)
 );
-
