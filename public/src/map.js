@@ -2,11 +2,39 @@ import { getConfig, loadCSV } from "./utils.js";
 
 async function loadKakaoSDK(apiKey) {
   return new Promise((resolve, reject) => {
-    if (window.kakao && window.kakao.maps) return resolve();
+    if (window.kakao && window.kakao.maps) {
+      console.log("✅ Kakao SDK 이미 로드됨");
+      return resolve();
+    }
+    
+    // API 키 유효성 검사
+    if (!apiKey || apiKey.trim() === "") {
+      return reject(new Error("❌ Kakao API 키가 비어있습니다"));
+    }
+    
+    console.log("📥 Kakao SDK 스크립트 로드 시작...");
     const script = document.createElement("script");
-    script.src = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${apiKey}&autoload=false`;
-    script.onload = resolve;
-    script.onerror = () => reject(new Error("❌ Kakao SDK 로드 실패"));
+    const url = `https://dapi.kakao.com/v2/maps/sdk.js?appkey=${encodeURIComponent(apiKey)}&autoload=false`;
+    script.src = url;
+    
+    script.onload = () => {
+      console.log("✅ Kakao SDK 스크립트 로드 완료");
+      // 스크립트가 로드되어도 window.kakao가 즉시 생성되지 않을 수 있음
+      setTimeout(() => {
+        if (window.kakao && window.kakao.maps) {
+          resolve();
+        } else {
+          reject(new Error("❌ Kakao SDK 스크립트는 로드되었지만 window.kakao 객체가 생성되지 않았습니다. API 키를 확인해주세요."));
+        }
+      }, 100);
+    };
+    
+    script.onerror = (error) => {
+      console.error("❌ Kakao SDK 스크립트 로드 실패:", error);
+      console.error("URL:", url.substring(0, 50) + "...");
+      reject(new Error("❌ Kakao SDK 로드 실패. API 키가 유효한지 확인해주세요."));
+    };
+    
     document.head.appendChild(script);
   });
 }
@@ -26,13 +54,27 @@ async function loadKakaoAndInit() {
       }
       return;
     }
-    console.log("✅ Kakao API 키 확인됨, SDK 로드 중...");
-    await loadKakaoSDK(key);
-    if (!window.kakao || !window.kakao.maps) {
-      console.error("❌ Kakao SDK 로드 실패");
+    console.log("✅ Kakao API 키 확인됨 (길이:", key.length, "), SDK 로드 중...");
+    try {
+      await loadKakaoSDK(key);
+    } catch (sdkError) {
+      console.error("❌ Kakao SDK 로드 에러:", sdkError.message);
       const container = document.getElementById("map");
       if (container) {
-        container.innerHTML = "<div style='padding:20px; text-align:center; color:#d32f2f;'>❌ Kakao 지도 SDK를 로드할 수 없습니다.</div>";
+        container.innerHTML = `<div style='padding:20px; text-align:center; color:#d32f2f; background:#ffebee; border-radius:8px;'>
+          <strong>❌ Kakao 지도 SDK 로드 실패</strong><br><br>
+          ${sdkError.message}<br><br>
+          <small>Netlify 환경 변수에서 KAKAO_JS_KEY가 올바르게 설정되었는지 확인해주세요.</small>
+        </div>`;
+      }
+      return;
+    }
+    
+    if (!window.kakao || !window.kakao.maps) {
+      console.error("❌ Kakao SDK 로드 후에도 window.kakao가 없습니다");
+      const container = document.getElementById("map");
+      if (container) {
+        container.innerHTML = "<div style='padding:20px; text-align:center; color:#d32f2f;'>❌ Kakao 지도 SDK를 초기화할 수 없습니다.</div>";
       }
       return;
     }
