@@ -24,6 +24,28 @@ function copySrcToPublic() {
   }
 }
 
+// data 폴더를 dist/data로 복사하는 헬퍼 (빌드 시)
+function copyDataToDist() {
+  const dataPath = resolve(__dirname, "public/data");
+  const distDataPath = resolve(__dirname, "dist/data");
+  
+  if (!existsSync(dataPath)) return;
+  
+  if (!existsSync(distDataPath)) {
+    mkdirSync(distDataPath, { recursive: true });
+  }
+  
+  const files = readdirSync(dataPath);
+  for (const file of files) {
+    const srcFile = resolve(dataPath, file);
+    const destFile = resolve(distDataPath, file);
+    const stat = statSync(srcFile);
+    if (stat.isFile()) {
+      copyFileSync(srcFile, destFile);
+    }
+  }
+}
+
 // Vite 설정: public/index.html을 진입점으로 사용
 export default defineConfig({
   root: "public",
@@ -40,6 +62,15 @@ export default defineConfig({
           }
           next();
         });
+      }
+    },
+    {
+      name: "copy-data",
+      buildStart() {
+        copyDataToDist();
+      },
+      closeBundle() {
+        copyDataToDist(); // 빌드 완료 후 data 폴더 복사
       }
     }
   ],

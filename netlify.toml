@@ -1,6 +1,14 @@
 [build]
   command = "npm run build"
   publish = "dist"
+  functions = "netlify/functions"
+
+# Rewrite 규칙: /config를 Netlify Function으로 매핑
+[[redirects]]
+  from = "/config"
+  to = "/.netlify/functions/config"
+  status = 200
+  force = false
 
 # Secrets scanning 설정
 # lock 파일과 package.json은 제외 (자동 생성 파일 및 프로젝트 메타데이터)
