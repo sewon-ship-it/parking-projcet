@@ -4,169 +4,353 @@
   <meta charset="UTF-8" />
   <title>최고의 동작구청장 뽑기</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <link rel="stylesheet" href="./styles.css" />
+  <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script src="https://dapi.kakao.com/v2/maps/sdk.js?autoload=false"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
+    body { font-family: 'Noto Sans KR', system-ui, sans-serif; }
+  </style>
 </head>
-<body>
-  <header>
-    <h1>🏛️ [가상] 최고의 동작구청장 후보는 누구?</h1>
-    <p class="subtitle">사회 × 국어 융합 수업: 우리 지역 문제 분석 & 제안하기</p>
+<body class="bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 min-h-screen">
+  <!-- Header -->
+  <header class="bg-gradient-to-r from-indigo-600 to-purple-600 text-white shadow-lg">
+    <div class="max-w-7xl mx-auto px-6 py-8">
+      <h1 class="text-3xl md:text-4xl font-bold mb-2">🏛️ [가상] 최고의 동작구청장 후보는 누구?</h1>
+      <p class="text-indigo-100 text-lg">사회 × 국어 융합 수업: 우리 지역 문제 분석 & 제안하기</p>
+    </div>
   </header>
-  <main>
-    <section class="panel">
-      <h2>1️⃣ 데이터 보기</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>동작구 불법주정차 CCTV 위치</h3>
-          <div id="map" class="map"></div>
-          <small>※ 지도: CCTV 마커</small>
-          <div style="margin-top:10px;">
-            <label><input type="checkbox" id="enableSuggest"> 설치 위치 찍기 모드</label>
-            <div class="muted">지도를 클릭하면 '제안 설치 위치'가 표시돼요.</div>
-            <div>선택 위치: <span id="pickedPos">-</span></div>
+
+  <!-- Progress Indicator -->
+  <div class="max-w-7xl mx-auto px-6 py-6">
+    <div class="bg-white rounded-xl shadow-md p-4 mb-6">
+      <div class="flex items-center justify-between">
+        <div class="flex items-center space-x-4 flex-1 overflow-x-auto">
+          <div class="step-indicator flex items-center" data-step="1">
+            <div class="step-circle w-10 h-10 rounded-full bg-indigo-600 text-white flex items-center justify-center font-bold flex-shrink-0">1</div>
+            <span class="ml-2 text-sm font-medium text-gray-700 whitespace-nowrap">데이터 보기</span>
+          </div>
+          <div class="step-line h-1 bg-gray-200 flex-1 min-w-[40px]"></div>
+          <div class="step-indicator flex items-center" data-step="2">
+            <div class="step-circle w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold flex-shrink-0">2</div>
+            <span class="ml-2 text-sm font-medium text-gray-500 whitespace-nowrap">원인 파악</span>
+          </div>
+          <div class="step-line h-1 bg-gray-200 flex-1 min-w-[40px]"></div>
+          <div class="step-indicator flex items-center" data-step="3">
+            <div class="step-circle w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold flex-shrink-0">3</div>
+            <span class="ml-2 text-sm font-medium text-gray-500 whitespace-nowrap">해결 방안</span>
+          </div>
+          <div class="step-line h-1 bg-gray-200 flex-1 min-w-[40px]"></div>
+          <div class="step-indicator flex items-center" data-step="4">
+            <div class="step-circle w-10 h-10 rounded-full bg-gray-300 text-gray-600 flex items-center justify-center font-bold flex-shrink-0">4</div>
+            <span class="ml-2 text-sm font-medium text-gray-500 whitespace-nowrap">투표하기</span>
           </div>
         </div>
-        <div class="card">
-          <h3>불법주정차 단속현황</h3>
-          <canvas id="barYear"></canvas>
-          <canvas id="barMonth" style="margin-top:12px;"></canvas>
-          <small class="muted">출처: 동작구 불법주정차 단속현황(교육용 가공 데이터)</small>
-          <div class="quiz">
-            <h4>📝 내용 확인 문제</h4>
-            <div class="q">
-              <div>1) 단속 건수가 가장 많았던 <b>연도</b>는 언제인가요?</div>
-              <label><input type="radio" name="q1" value="2016"> 2016년</label>
-              <label><input type="radio" name="q1" value="2019"> 2019년</label>
-              <label><input type="radio" name="q1" value="2023"> 2023년</label>
-              <div id="q1Result" class="muted"></div>
+      </div>
+    </div>
+  </div>
+
+  <main class="max-w-7xl mx-auto px-6 pb-12">
+    <!-- Step 1: 데이터 보기 -->
+    <section id="step-1" class="step-panel bg-white rounded-2xl shadow-xl p-8 mb-6">
+      <div class="flex items-center mb-6">
+        <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">1</div>
+        <h2 class="text-2xl font-bold text-gray-800">데이터 보기</h2>
+      </div>
+      
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- 그래프 카드 -->
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-indigo-100">
+          <h3 class="text-lg font-semibold text-gray-800 mb-4 flex items-center">
+            <span class="mr-2">📊</span> 불법주정차 단속현황
+          </h3>
+          <canvas id="barYear" class="mb-4"></canvas>
+          <canvas id="barMonth"></canvas>
+          <p class="text-xs text-gray-500 mt-3">출처: 동작구 불법주정차 단속현황(교육용 가공 데이터)</p>
+          
+          <!-- 퀴즈 -->
+          <div class="mt-6 bg-white rounded-lg p-4 border border-indigo-200">
+            <h4 class="font-semibold text-gray-800 mb-3 flex items-center">
+              <span class="mr-2">📝</span> 내용 확인 문제
+            </h4>
+            <div class="space-y-3">
+              <div>
+                <p class="text-sm font-medium text-gray-700 mb-2">1) 단속 건수가 가장 많았던 <b>연도</b>는 언제인가요?</p>
+                <div class="space-y-1">
+                  <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="q1" value="2016" class="mr-2">
+                    <span class="text-sm">2016년</span>
+                  </label>
+                  <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="q1" value="2019" class="mr-2">
+                    <span class="text-sm">2019년</span>
+                  </label>
+                  <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="q1" value="2023" class="mr-2">
+                    <span class="text-sm">2023년</span>
+                  </label>
+                </div>
+                <div id="q1Result" class="text-sm mt-2 text-gray-600"></div>
+              </div>
+              <div>
+                <p class="text-sm font-medium text-gray-700 mb-2">2) 단속 건수가 가장 많았던 <b>월</b>은 언제인가요?</p>
+                <div class="space-y-1">
+                  <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="q2" value="1" class="mr-2">
+                    <span class="text-sm">1월</span>
+                  </label>
+                  <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="q2" value="3" class="mr-2">
+                    <span class="text-sm">3월</span>
+                  </label>
+                  <label class="flex items-center cursor-pointer">
+                    <input type="radio" name="q2" value="8" class="mr-2">
+                    <span class="text-sm">8월</span>
+                  </label>
+                </div>
+                <div id="q2Result" class="text-sm mt-2 text-gray-600"></div>
+              </div>
             </div>
-            <div class="q" style="margin-top:8px;">
-              <div>2) 단속 건수가 가장 많았던 <b>월</b>은 언제인가요?</div>
-              <label><input type="radio" name="q2" value="1"> 1월</label>
-              <label><input type="radio" name="q2" value="3"> 3월</label>
-              <label><input type="radio" name="q2" value="8"> 8월</label>
-              <div id="q2Result" class="muted"></div>
-            </div>
-            <button id="btnCheckQuiz">정답 확인</button>
+            <button id="btnCheckQuiz" class="mt-4 w-full bg-indigo-600 hover:bg-indigo-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+              정답 확인
+            </button>
+            <button id="btnNextToStep2" class="mt-3 w-full bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-4 rounded-lg transition-colors hidden">
+              다음 단계로 →
+            </button>
+          </div>
+        </div>
+
+        <!-- 지도는 나중에 표시될 영역 (Step 3에서) -->
+        <div id="mapPlaceholder" class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100 flex items-center justify-center min-h-[400px]">
+          <div class="text-center text-gray-500">
+            <div class="text-4xl mb-2">🗺️</div>
+            <p class="text-sm">지도는 해결 방안 단계에서 표시됩니다</p>
           </div>
         </div>
       </div>
     </section>
-    <section class="panel">
-      <h2>2️⃣ 문제의 원인은?</h2>
-      <div class="card">
-        <ul>
-          <li>신고가 많은 곳을 찾아 왜 그런지 추리해보자.</li>
-          <li>주차장이 가까운데도 신고가 많다면 왜일까?</li>
-          <li>신고가 많은 곳에는 어떤 특징이 있을까? (학교/시장/역 주변 등)</li>
+
+    <!-- Step 2: 문제의 원인 -->
+    <section id="step-2" class="step-panel bg-white rounded-2xl shadow-xl p-8 mb-6 hidden">
+      <div class="flex items-center mb-6">
+        <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">2</div>
+        <h2 class="text-2xl font-bold text-gray-800">문제의 원인은?</h2>
+      </div>
+      
+      <div class="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-6 border border-amber-200">
+        <ul class="space-y-2 mb-6 text-gray-700">
+          <li class="flex items-start">
+            <span class="mr-2">💡</span>
+            <span>신고가 많은 곳을 찾아 왜 그런지 추리해보자.</span>
+          </li>
+          <li class="flex items-start">
+            <span class="mr-2">💡</span>
+            <span>주차장이 가까운데도 신고가 많다면 왜일까?</span>
+          </li>
+          <li class="flex items-start">
+            <span class="mr-2">💡</span>
+            <span>신고가 많은 곳에는 어떤 특징이 있을까? (학교/시장/역 주변 등)</span>
+          </li>
         </ul>
-        <textarea id="cause" placeholder="예: 주택가 골목에 주차장이 부족해요. 출퇴근 시간에 불법 주정차가 많아져요."></textarea>
-        <button id="btnCauseSubmit">제출 → AI 피드백 받기</button>
-        <div id="causeFeedback" class="result"></div>
+        <textarea id="cause" placeholder="예: 주택가 골목에 주차장이 부족해요. 출퇴근 시간에 불법 주정차가 많아져요." 
+          class="w-full min-h-[120px] p-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none"></textarea>
+        <button id="btnCauseSubmit" class="mt-4 w-full bg-amber-600 hover:bg-amber-700 text-white font-medium py-3 px-6 rounded-lg transition-colors">
+          제출 → AI 피드백 받기
+        </button>
+        <div id="causeFeedback" class="mt-4 p-4 bg-white rounded-lg border border-amber-200 min-h-[60px] text-sm text-gray-700"></div>
+        <button id="btnNextToStep3" class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors hidden">
+          다음 단계로 →
+        </button>
       </div>
     </section>
-    <section class="panel">
-      <h2>3️⃣ 해결 방안 제안하기 (국어: 조건 충족)</h2>
-      <div class="grid">
-        <div class="card">
-          <label>문제상황 (10자+)</label>
-          <textarea id="problem" placeholder="예: 학교 앞 도로에서 불법 주정차로 학생들이 위험해요."></textarea>
-          <label>제안하는 내용 (10자+)</label>
-          <textarea id="proposal" placeholder="예: 등·하교 시간에 한해 임시 주차구역을 만들고, CCTV와 표지판을 설치해요."></textarea>
-          <label>제안하는 이유 (10자+)</label>
-          <textarea id="reason" placeholder="예: 아이들이 안전하게 다닐 수 있고 혼잡이 줄어들어요."></textarea>
-          <div class="hint">힌트: CCTV, 공영/공용주차장, 안내문·표지판, 캠페인, 시간제 차고지 등</div>
-          <button id="btnCheck">조건 확인 & AI 피드백 받기</button>
-          <div id="checkResult" class="result"></div>
+
+    <!-- Step 3: 해결 방안 제안 -->
+    <section id="step-3" class="step-panel bg-white rounded-2xl shadow-xl p-8 mb-6 hidden">
+      <div class="flex items-center mb-6">
+        <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">3</div>
+        <h2 class="text-2xl font-bold text-gray-800">해결 방안 제안하기</h2>
+      </div>
+      
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-gradient-to-br from-green-50 to-emerald-50 rounded-xl p-6 border border-green-200">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">문제상황 (10자+)</label>
+          <textarea id="problem" placeholder="예: 학교 앞 도로에서 불법 주정차로 학생들이 위험해요." 
+            class="w-full min-h-[100px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none mb-4"></textarea>
+          
+          <label class="block text-sm font-semibold text-gray-700 mb-2">제안하는 내용 (10자+)</label>
+          <textarea id="proposal" placeholder="예: 등·하교 시간에 한해 임시 주차구역을 만들고, CCTV와 표지판을 설치해요." 
+            class="w-full min-h-[100px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none mb-4"></textarea>
+          
+          <label class="block text-sm font-semibold text-gray-700 mb-2">제안하는 이유 (10자+)</label>
+          <textarea id="reason" placeholder="예: 아이들이 안전하게 다닐 수 있고 혼잡이 줄어들어요." 
+            class="w-full min-h-[100px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent resize-none mb-4"></textarea>
+          
+          <div class="text-xs text-gray-600 mb-4 p-3 bg-white rounded border border-green-200">
+            💡 힌트: CCTV, 공영/공용주차장, 안내문·표지판, 캠페인, 시간제 차고지 등
+          </div>
+          
+          <button id="btnCheck" class="w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors">
+            조건 확인 & AI 피드백 받기
+          </button>
+          <div id="checkResult" class="mt-4 p-4 bg-white rounded-lg border border-green-200 min-h-[40px] text-sm text-gray-700"></div>
+          <button id="btnNextToStep4" class="mt-4 w-full bg-green-600 hover:bg-green-700 text-white font-medium py-3 px-6 rounded-lg transition-colors hidden">
+            다음 단계로 →
+          </button>
         </div>
-        <div class="card">
-          <h3>AI 피드백</h3>
-          <pre id="aiFeedback">작성 후 [조건 확인]을 눌러보세요.</pre>
-          <h4>참고 문헌 (PDF)</h4>
-          <ul id="referenceList"></ul>
+        
+        <div class="space-y-6">
+          <div class="bg-gradient-to-br from-blue-50 to-cyan-50 rounded-xl p-6 border border-blue-200">
+            <h3 class="font-semibold text-gray-800 mb-3">AI 피드백</h3>
+            <pre id="aiFeedback" class="text-sm text-gray-700 bg-white p-4 rounded-lg border border-blue-200 min-h-[200px] whitespace-pre-wrap">작성 후 [조건 확인]을 눌러보세요.</pre>
+            <h4 class="font-semibold text-gray-800 mt-4 mb-2">참고 문헌 (PDF)</h4>
+            <ul id="referenceList" class="text-sm text-gray-600 space-y-1"></ul>
+          </div>
+          
+          <!-- 지도 (Step 3에서 표시) -->
+          <div class="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-200">
+            <h3 class="font-semibold text-gray-800 mb-3">동작구 불법주정차 CCTV 위치</h3>
+            <div id="map" class="w-full h-[300px] rounded-lg border border-purple-200"></div>
+            <p class="text-xs text-gray-500 mt-2">※ 지도: CCTV 마커</p>
+          </div>
         </div>
       </div>
     </section>
-    <section class="panel">
-      <h2>4️⃣ 투표하기</h2>
-      <div class="grid">
-        <div class="card">
-          <label>나의 제안 제목</label>
-          <input id="myTitle" placeholder="예: 학교 앞 시간제 주차 & CCTV 병행">
-          <button id="btnSubmitProposal">제안 등록</button>
-          <div id="submitMsg" class="muted"></div>
+
+    <!-- Step 4: 투표하기 -->
+    <section id="step-4" class="step-panel bg-white rounded-2xl shadow-xl p-8 mb-6 hidden">
+      <div class="flex items-center mb-6">
+        <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">4</div>
+        <h2 class="text-2xl font-bold text-gray-800">투표하기</h2>
+      </div>
+      
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl p-6 border border-pink-200">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">나의 제안 제목</label>
+          <input id="myTitle" placeholder="예: 학교 앞 시간제 주차 & CCTV 병행" 
+            class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-pink-500 focus:border-transparent mb-4">
+          <button id="btnSubmitProposal" class="w-full bg-pink-600 hover:bg-pink-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+            제안 등록
+          </button>
+          <div id="submitMsg" class="mt-3 text-sm text-gray-600"></div>
         </div>
-        <div class="card">
-          <h3>후보 목록 (실시간)</h3>
-          <ul id="proposalList"></ul>
+        
+        <div class="bg-gradient-to-br from-violet-50 to-purple-50 rounded-xl p-6 border border-violet-200">
+          <h3 class="font-semibold text-gray-800 mb-4">후보 목록 (실시간)</h3>
+          <ul id="proposalList" class="space-y-2 text-sm"></ul>
         </div>
-        <div class="card">
-          <h3>분야별 1등 (실시간)</h3>
-          <ul>
-            <li>창의성 1등: <b id="winCreativity">-</b></li>
-            <li>실현가능성 1등: <b id="winFeasible">-</b></li>
-            <li>효과성 1등: <b id="winImpact">-</b></li>
+        
+        <div class="bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl p-6 border border-indigo-200">
+          <h3 class="font-semibold text-gray-800 mb-4">분야별 1등 (실시간)</h3>
+          <ul class="space-y-2 text-sm">
+            <li class="flex justify-between">
+              <span class="text-gray-600">창의성 1등:</span>
+              <b id="winCreativity" class="text-indigo-600">-</b>
+            </li>
+            <li class="flex justify-between">
+              <span class="text-gray-600">실현가능성 1등:</span>
+              <b id="winFeasible" class="text-indigo-600">-</b>
+            </li>
+            <li class="flex justify-between">
+              <span class="text-gray-600">효과성 1등:</span>
+              <b id="winImpact" class="text-indigo-600">-</b>
+            </li>
           </ul>
         </div>
       </div>
     </section>
-    <section class="panel">
-      <h2>5️⃣ 임명장 · 공고 포스터 · 배지</h2>
-      <div class="grid">
-        <div class="card">
-          <h3>임명장 만들기 (1등 제안)</h3>
-          <button id="btnMakeAward">가상의 동작구청장 임명장 만들기</button>
-          <canvas id="awardCanvas" width="900" height="600"></canvas>
-          <a id="awardDownload" download="동작구청장_임명장.png">PNG 저장</a>
+
+    <!-- Step 5: 임명장 · 공고 포스터 · 배지 -->
+    <section id="step-5" class="step-panel bg-white rounded-2xl shadow-xl p-8 mb-6 hidden">
+      <div class="flex items-center mb-6">
+        <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">5</div>
+        <h2 class="text-2xl font-bold text-gray-800">임명장 · 공고 포스터 · 배지</h2>
+      </div>
+      
+      <div class="grid md:grid-cols-3 gap-6">
+        <div class="bg-gradient-to-br from-yellow-50 to-amber-50 rounded-xl p-6 border border-yellow-200">
+          <h3 class="font-semibold text-gray-800 mb-4">임명장 만들기 (1등 제안)</h3>
+          <button id="btnMakeAward" class="w-full bg-yellow-600 hover:bg-yellow-700 text-white font-medium py-2 px-4 rounded-lg transition-colors mb-4">
+            가상의 동작구청장 임명장 만들기
+          </button>
+          <canvas id="awardCanvas" width="900" height="600" class="w-full border border-yellow-200 rounded-lg mb-2"></canvas>
+          <a id="awardDownload" download="동작구청장_임명장.png" class="block text-center text-sm text-yellow-700 hover:text-yellow-800">PNG 저장</a>
         </div>
-        <div class="card">
-          <h3>공고 포스터 (AI 문구+캔버스 꾸미기)</h3>
-          <button id="btnMakePoster">포스터 생성</button>
-          <canvas id="posterCanvas" width="900" height="1200"></canvas>
-          <a id="posterDownload" download="공고_포스터.png">PNG 저장</a>
+        
+        <div class="bg-gradient-to-br from-teal-50 to-cyan-50 rounded-xl p-6 border border-teal-200">
+          <h3 class="font-semibold text-gray-800 mb-4">공고 포스터</h3>
+          <button id="btnMakePoster" class="w-full bg-teal-600 hover:bg-teal-700 text-white font-medium py-2 px-4 rounded-lg transition-colors mb-4">
+            포스터 생성
+          </button>
+          <canvas id="posterCanvas" width="900" height="1200" class="w-full border border-teal-200 rounded-lg mb-2"></canvas>
+          <a id="posterDownload" download="공고_포스터.png" class="block text-center text-sm text-teal-700 hover:text-teal-800">PNG 저장</a>
         </div>
-        <div class="card">
-          <h3>분야별 배지</h3>
-          <div class="badge-actions">
-            <button data-type="creativity">창의성 1등 배지</button>
-            <button data-type="feasible">실현가능성 1등 배지</button>
-            <button data-type="impact">효과성 1등 배지</button>
+        
+        <div class="bg-gradient-to-br from-purple-50 to-fuchsia-50 rounded-xl p-6 border border-purple-200">
+          <h3 class="font-semibold text-gray-800 mb-4">분야별 배지</h3>
+          <div class="space-y-2 mb-4">
+            <button data-type="creativity" class="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">
+              창의성 1등 배지
+            </button>
+            <button data-type="feasible" class="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">
+              실현가능성 1등 배지
+            </button>
+            <button data-type="impact" class="w-full bg-purple-600 hover:bg-purple-700 text-white text-sm font-medium py-2 px-4 rounded-lg transition-colors">
+              효과성 1등 배지
+            </button>
           </div>
-          <canvas id="badgeCanvas" width="500" height="500"></canvas>
-          <a id="badgeDownload" download="디지털_배지.png">PNG 저장</a>
+          <canvas id="badgeCanvas" width="500" height="500" class="w-full border border-purple-200 rounded-lg mb-2"></canvas>
+          <a id="badgeDownload" download="디지털_배지.png" class="block text-center text-sm text-purple-700 hover:text-purple-800">PNG 저장</a>
         </div>
       </div>
     </section>
-    <section class="panel">
-      <h2>6️⃣ 정책 효과 시뮬레이션</h2>
-      <div class="grid">
-        <div class="card">
-          <label>정책 선택</label>
-          <select id="policySelect">
+
+    <!-- Step 6: 정책 효과 시뮬레이션 -->
+    <section id="step-6" class="step-panel bg-white rounded-2xl shadow-xl p-8 mb-6 hidden">
+      <div class="flex items-center mb-6">
+        <div class="w-12 h-12 bg-indigo-600 rounded-full flex items-center justify-center text-white font-bold text-xl mr-4">6</div>
+        <h2 class="text-2xl font-bold text-gray-800">정책 효과 시뮬레이션</h2>
+      </div>
+      
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="bg-gradient-to-br from-emerald-50 to-green-50 rounded-xl p-6 border border-emerald-200">
+          <label class="block text-sm font-semibold text-gray-700 mb-2">정책 선택</label>
+          <select id="policySelect" class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent mb-4">
             <option value="0.05">표지판 정비(+안내) — 5% 감소 가정</option>
             <option value="0.1">CCTV 추가 설치 — 10% 감소 가정</option>
             <option value="0.15">시간제 주차구역 운영 — 15% 감소 가정</option>
             <option value="0.25">복합 정책(안내+시간제+CCTV) — 25% 감소 가정</option>
           </select>
-          <button id="btnSimulate">시뮬레이션 실행</button>
-          <small>가상의 모델로 교육용입니다. 실제와 다를 수 있어요.</small>
-          <label style="margin-top:10px;">예측 설명(왜 줄어들까요?)</label>
-          <textarea id="predictExplain" placeholder="예: 등·하교 시간에 안내와 CCTV가 함께 있으면 규칙을 잘 지키게 되고, 혼잡이 줄어요."></textarea>
-          <button id="btnSubmitPrediction">예측 제출 & AI 피드백</button>
-          <div id="simFeedback" class="result"></div>
-          <button id="btnSimulateFromProposal">나의 제안으로 예측</button>
-          <div id="simSummary" class="result"></div>
+          <button id="btnSimulate" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-colors mb-4">
+            시뮬레이션 실행
+          </button>
+          <p class="text-xs text-gray-500 mb-4">가상의 모델로 교육용입니다. 실제와 다를 수 있어요.</p>
+          
+          <label class="block text-sm font-semibold text-gray-700 mb-2">예측 설명(왜 줄어들까요?)</label>
+          <textarea id="predictExplain" placeholder="예: 등·하교 시간에 안내와 CCTV가 함께 있으면 규칙을 잘 지키게 되고, 혼잡이 줄어요." 
+            class="w-full min-h-[100px] p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent resize-none mb-4"></textarea>
+          <button id="btnSubmitPrediction" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-colors mb-4">
+            예측 제출 & AI 피드백
+          </button>
+          <div id="simFeedback" class="p-4 bg-white rounded-lg border border-emerald-200 min-h-[60px] text-sm text-gray-700 mb-4"></div>
+          <button id="btnSimulateFromProposal" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2 px-4 rounded-lg transition-colors">
+            나의 제안으로 예측
+          </button>
+          <div id="simSummary" class="mt-4 p-4 bg-white rounded-lg border border-emerald-200 min-h-[60px] text-sm text-gray-700"></div>
         </div>
-        <div class="card">
-          <h3>정책 적용 전/후 비교 (월별)</h3>
+        
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+          <h3 class="font-semibold text-gray-800 mb-4">정책 적용 전/후 비교 (월별)</h3>
           <canvas id="projChart"></canvas>
         </div>
       </div>
     </section>
   </main>
-  <footer>© 2025 Traffic-Class-App • 교육용 데모</footer>
+
+  <footer class="bg-gray-800 text-gray-300 text-center py-6 mt-12">
+    <p>© 2025 Traffic-Class-App • 교육용 데모</p>
+  </footer>
+
   <script type="module" src="/src/utils.js"></script>
   <script type="module" src="/src/rubric.js"></script>
   <script type="module" src="/src/firebase.js"></script>
@@ -177,4 +361,3 @@
   <script type="module" src="/src/app.js"></script>
 </body>
 </html>
-

@@ -130,10 +130,38 @@ async function loadKakaoAndInit() {
   }
 }
 
-// DOMContentLoaded 시에만 실행 (중복 방지)
+// Step 3가 표시될 때 지도 초기화
+let mapInitialized = false;
+
+function initMapWhenStep3Visible() {
+  const step3 = document.getElementById("step-3");
+  const mapContainer = document.getElementById("map");
+  
+  if (step3 && !step3.classList.contains("hidden") && mapContainer && !mapInitialized) {
+    loadKakaoAndInit();
+    mapInitialized = true;
+  }
+}
+
+// MutationObserver로 Step 3 표시 감지
+const observer = new MutationObserver(() => {
+  initMapWhenStep3Visible();
+});
+
+// 초기 체크
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", loadKakaoAndInit);
+  document.addEventListener("DOMContentLoaded", () => {
+    const step3 = document.getElementById("step-3");
+    if (step3) {
+      observer.observe(step3, { attributes: true, attributeFilter: ['class'] });
+      initMapWhenStep3Visible();
+    }
+  });
 } else {
-  loadKakaoAndInit();
+  const step3 = document.getElementById("step-3");
+  if (step3) {
+    observer.observe(step3, { attributes: true, attributeFilter: ['class'] });
+    initMapWhenStep3Visible();
+  }
 }
 
